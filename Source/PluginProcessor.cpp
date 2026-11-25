@@ -7,17 +7,25 @@ DeluxeBassFuzzAudioProcessor::DeluxeBassFuzzAudioProcessor()
         .withInput  ("Input",  juce::AudioChannelSet::mono(), true)
         .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
     ),
+    // Host order is the Push bank order. Ten faceplate controls, all published:
+    // Live auto-maps a plugin at 64 or fewer, and this pedal is the whole set.
     parameters (*this, nullptr, juce::Identifier ("DeluxeBassFuzz"),
-        {   // Parameter layout
+        {
+            std::make_unique<juce::AudioParameterFloat> (paramVolume,    "Volume",    0.0f, 1.0f, 0.7f),
             std::make_unique<juce::AudioParameterFloat> (paramSustain,   "Sustain",   0.0f, 1.0f, 0.5f),
             std::make_unique<juce::AudioParameterFloat> (paramTone,      "Tone",      0.0f, 1.0f, 0.5f),
-            std::make_unique<juce::AudioParameterFloat> (paramVolume,    "Volume",    0.0f, 1.0f, 0.7f),
             std::make_unique<juce::AudioParameterFloat> (paramBlend,     "Blend",     0.0f, 1.0f, 0.5f),
             std::make_unique<juce::AudioParameterFloat> (paramGate,      "Gate",      0.0f, 1.0f, 0.0f),
-            std::make_unique<juce::AudioParameterFloat> (paramHPF,       "Crossover HPF", 125.0f, 1750.0f, 500.0f),
-            std::make_unique<juce::AudioParameterFloat> (paramLPF,       "Crossover LPF", 60.0f, 10000.0f, 200.0f),
             std::make_unique<juce::AudioParameterBool>  (paramCrossover, "Crossover", false),
-            std::make_unique<juce::AudioParameterBool>  (paramInputPad,  "Input Pad", false),
+            std::make_unique<juce::AudioParameterFloat> (
+                paramHPF, "HPF",
+                juce::NormalisableRange<float> (125.0f, 1750.0f), 500.0f,
+                juce::AudioParameterFloatAttributes().withLabel ("Hz")),
+            std::make_unique<juce::AudioParameterFloat> (
+                paramLPF, "LPF",
+                juce::NormalisableRange<float> (60.0f, 10000.0f), 200.0f,
+                juce::AudioParameterFloatAttributes().withLabel ("Hz")),
+            std::make_unique<juce::AudioParameterBool>  (paramInputPad,  "Pad",       false),
             std::make_unique<juce::AudioParameterBool>  (paramBypass,    "Bypass",    false),
         }
     ),
@@ -334,7 +342,11 @@ void DeluxeBassFuzzAudioProcessor::changeProgramName (int index, const juce::Str
     juce::ignoreUnused (index, newName);
 }
 
-//==============================================================================
+juce::AudioProcessorParameter* DeluxeBassFuzzAudioProcessor::getBypassParameter() const
+{
+    return parameters.getParameter (paramBypass);
+}
+
 void DeluxeBassFuzzAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     auto state = parameters.copyState();

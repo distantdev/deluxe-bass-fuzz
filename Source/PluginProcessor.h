@@ -55,6 +55,9 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    // The panel Bypass switch is the host bypass, so the wrapper does not add a second one.
+    juce::AudioProcessorParameter* getBypassParameter() const override;
+
     //==============================================================================
     // Parameter access
     juce::AudioProcessorValueTreeState& getParameters() { return parameters; }
