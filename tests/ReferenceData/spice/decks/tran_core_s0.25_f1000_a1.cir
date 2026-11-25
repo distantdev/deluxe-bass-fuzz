@@ -1,0 +1,26 @@
+* TRAN core_s0.25_f1000_a1
+.include "D:/HobbyCode/bass-fuzz-deluxe/tests/ReferenceData/spice/bmp_parts.lib"
+.options reltol=1e-4 method=gear
+Vcc vcc 0 DC 9
+Vin in 0 DC 0 SIN(0 1.0 1000)
+X1 in c1 vcc BMP_Q1
+Xs c1 sw BMP_SUSTAIN frac=0.0218412
+X2 sw c2 vcc BMP_CLIP
+X3 c2 c3 vcc BMP_CLIP
+Xt c3 tw BMP_TONE tone=0.5
+X4 tw c4 vcc BMP_Q4
+C13 c4 out 100n
+Rvol out 0 100k
+
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=8
+tran 5.208333333e-06 0.2 0 2.604166667e-06
+linearize v(in) v(out)
+let vin = v(in)
+let vout = v(out)
+wrdata D:/HobbyCode/bass-fuzz-deluxe/tests/ReferenceData/spice/tran_core_s0.25_f1000_a1.csv vin vout
+quit
+.endc
+.end

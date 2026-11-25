@@ -1,0 +1,6 @@
+build/
+build-*/
+.vs/
+out/
+tests/ReferenceData/dsp/
+tests/ReferenceData/spice/decks/*.log

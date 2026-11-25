@@ -1,0 +1,127 @@
+* Deluxe Bass Fuzz core (classic-family Classic Bass Fuzz) - corrected reference netlist
+* ngspice / LTspice. Run:  ngspice_con -b docs/deluxe_bass_fuzz.cir
+*
+* Reference designators follow the GGG "BMP classic bass fuzz" BOM numbering.
+* Values: 4-transistor bass fuzz (GGG BOM 2012, labatteria.it "Classic Bass Fuzz
+* Russo" BOM, circuit reference / circuit reference notes). OEM says the Deluxe Bass Fuzz core is
+* based on the classic bass fuzz; exact Deluxe Bass Fuzz  values are not
+* published, so these are the closest documented values.
+* Tone stack: R19=11.5k (circuit reference, circuit reference: "V11
+* Deluxe Bass Fuzz - the low pass resistor value was 11.5k"), C11=10n, C10=3n9
+* (circuit reference: .004uF), R18=22k. classic units used R19=20k; this file used 39k
+* until validated. NOTE: an OEM forum post (forum "Make Bass Fuzz sound like
+* classic bass fuzz") reports R8 (=R19 here) 11.5k AND the LP cap missing on the
+* poster's stock Deluxe Bass Fuzz; the 10n is kept here (project decision).
+*
+* Corrections vs. the previous version of this file:
+*  - stage outputs are taken from the COLLECTORS (previously emitters), and each
+*    stage has its 12k collector load to +9V (previously missing: no DC path)
+*  - Q2/Q3 inputs have the 10k series resistors (R8/R13); Q1 input 39k (R1)
+*  - clipping diodes are an anti-parallel pair in series with 47n (C6/C9)
+*    between collector and base (previously collector to an unconnected node)
+*  - 470p feedback caps on Q1/Q2/Q3 (C2/C5/C8)
+*  - tone stack: the 3n9 cap is in SERIES from the input and 22k shunts to
+*    ground (high-pass, treble node); 11.5k series + 10n shunt is the LOW-pass
+*    (bass node). Node names / measurements fixed accordingly.
+*  - Q4: 10k collector, 2k emitter (classic values); no emitter coupling caps
+*  - sustain and volume pots are real dividers (previously 2 resistors to ground)
+*  - removed the undefined OPAMP / crossover subcircuits and the protection
+*    diode wired Vcc-to-Vcc
+
+.model 2N5088 NPN(Is=5.911f Xti=3 Eg=1.11 Vaf=62.37 Bf=1122 Ne=1.394 Ise=5.911f
++ Ikf=14.92m Xtb=1.5 Br=1.271 Isc=0 Ikr=0 Rc=1.61 Cjc=4.017p Mjc=.3174 Vjc=.75
++ Fc=.5 Cje=4.973p Mje=.4146 Vje=.75 Tr=4.673n Tf=821.7p Itf=.35 Vtf=4 Xtf=7 Rb=10)
+.model 1N914 D(Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 Tt=20n)
+
+.param sus=0.5          ; SUSTAIN knob 0..1 (100k log pot)
+.param tone=0.5         ; TONE knob 0..1 (0 = bass, 1 = treble)
+.param vol=1.0          ; VOLUME knob 0..1 (100k log pot)
+.param fsus={(pow(10,2*sus)-1)/99}
+.param fvol={(pow(10,2*vol)-1)/99}
+
+V1   vcc 0 DC 9
+Vin  in  0 DC 0 AC 1 SIN(0 0.1 1k)
+R26  in  0 1.5Meg         ; input pulldown
+C15  in  0 100p           ; RF filter
+
+* ---- Q1 input booster -------------------------------------------------------
+C1   in   n1  100n
+R1   n1   b1  39k
+R2   b1   0   100k
+R3   c1   b1  470k
+C2   c1   b1  470p
+R5   vcc  c1  12k
+R4   e1   0   390
+Q1   c1   b1  e1  2N5088
+
+* ---- SUSTAIN (R6, 100k log) -------------------------------------------------
+C3   c1   s3  100n
+R6a  s3   sw  {max(100k*(1-fsus),1)}
+R6b  sw   s1  {max(100k*fsus,1)}
+R7   s1   0   1k
+
+* ---- Q2 first clipping stage -----------------------------------------------
+C4   sw   n2  100n
+R8   n2   b2  10k
+R9   b2   0   100k
+R10  c2   b2  470k
+C5   c2   b2  470p
+C6   c2   d2  47n
+D1   d2   b2  1N914
+D2   b2   d2  1N914
+R11  vcc  c2  12k
+R12  e2   0   390
+Q2   c2   b2  e2  2N5088
+
+* ---- Q3 second clipping stage ----------------------------------------------
+C7   c2   n3  100n
+R13  n3   b3  10k
+R14  b3   0   100k
+R15  c3   b3  470k
+C8   c3   b3  470p
+C9   c3   d3  47n
+D3   d3   b3  1N914
+D4   b3   d3  1N914
+R17  vcc  c3  12k
+R16  e3   0   390
+Q3   c3   b3  e3  2N5088
+
+* ---- Passive tone stack -----------------------------------------------------
+R19  c3   lp_node  11.5k   ; low-pass (bass) series R (circuit reference, BBM)
+C11  lp_node 0     10n     ; low-pass shunt C      -> ~1.38 kHz
+C10  c3   hp_node  3.9n    ; high-pass (treble) series C
+R18  hp_node 0     22k     ; high-pass shunt R     -> ~1.86 kHz
+R20a lp_node tone_w {max(100k*tone,1)}
+R20b tone_w hp_node {max(100k*(1-tone),1)}
+
+* ---- Q4 recovery stage -------------------------------------------------------
+C12  tone_w b4  100n
+R21  b4   0   100k
+R22  c4   b4  470k
+R24  vcc  c4  10k
+R23  e4   0   2k
+Q4   c4   b4  e4  2N5088
+
+* ---- VOLUME (R25, 100k log) ---------------------------------------------------
+C13  c4   v1  100n
+R25a v1   out {max(100k*(1-fvol),1)}
+R25b out  0   {max(100k*fvol,1)}
+
+.control
+op
+print v(c1) v(c2) v(c3) v(c4)
+ac dec 50 20 20k
+meas ac gain_q1_1k   find vdb(c1)      at=1k
+meas ac gain_tone_1k find vdb(tone_w)  at=1k
+meas ac gain_out_1k  find vdb(out)     at=1k
+* tone-stack insertion gain (wiper / stack input), LOADED by Q4's input
+* (lower than the unloaded stack; BmpToneStack is the unloaded model, the
+*  DSP core includes Q4's input load in BmpOutputStage)
+let tone_ins = vdb(tone_w) - vdb(c3)
+meas ac tone_ins_100 find tone_ins at=100
+meas ac tone_ins_1k  find tone_ins at=1k
+meas ac tone_ins_5k  find tone_ins at=5k
+tran 5u 50m 0 1u
+fourier 1k v(out)
+.endc
+.end

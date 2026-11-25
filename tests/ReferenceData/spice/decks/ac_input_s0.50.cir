@@ -1,0 +1,24 @@
+* AC input_s0.50
+.include "D:/HobbyCode/bass-fuzz-deluxe/tests/ReferenceData/spice/bmp_parts.lib"
+Vcc vcc 0 DC 9
+Vin in 0 DC 0 AC 1
+X1 in c1 vcc BMP_Q1
+Xs c1 out BMP_SUSTAIN frac=0.0909091
+X2l out c2l vcc BMP_CLIP
+X3l c2l c3l vcc BMP_CLIP
+Xtl c3l twl BMP_TONE tone=0.5
+X4l twl c4l vcc BMP_Q4
+C13l c4l vl 100n
+Rvl vl 0 100k
+
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=8
+ac dec 50 20 20000
+let mag_db = db(v(out))
+let phase_deg = cph(v(out)) * 180 / pi
+wrdata D:/HobbyCode/bass-fuzz-deluxe/tests/ReferenceData/spice/ac_input_s0.50.csv mag_db phase_deg
+quit
+.endc
+.end

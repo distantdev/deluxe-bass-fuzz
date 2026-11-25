@@ -1,0 +1,81 @@
+* ============================================================================
+* Bass Big Muff Pi (Russian-family core) - SPICE parts library
+* Used by tools/run_spice.py; see docs/bass_big_muff.cir for the full deck.
+*
+* Gain-stage values: Green/Black Russian Big Muff BOM (GGG "BMP Green Russian"
+* BOM, JD Sleep 2012; labatteria.it "Big Muff Russo" BOM; Kit Rae / bigmuffpage
+* notes: 390R emitters, 12k collectors, 470k/100k bias, 47n clipping caps,
+* 470p feedback caps). The exact Deluxe Bass Big Muff (V11A) values are not
+* published; EHX says the BBM core is based on the Black Russian.
+* Tone stack: R_LP=11.5k (Kit Rae, kitrae.net/music/big_muff_guts.html: "V11
+* Bass Big Muff - the low pass resistor value was 11.5k"; HP resistor 22k),
+* C_LP=10n, C_HP=3n9 (Kit Rae lists .004uF), R_HP=22k, 100k pot. Russian units
+* used R_LP=20k; the project previously used 39k.
+* ============================================================================
+
+* 2N5088 (LTspice standard.bjt / ON Semi-derived Gummel-Poon)
+.model 2N5088 NPN(Is=5.911f Xti=3 Eg=1.11 Vaf=62.37 Bf=1122 Ne=1.394 Ise=5.911f
++ Ikf=14.92m Xtb=1.5 Br=1.271 Isc=0 Ikr=0 Rc=1.61 Cjc=4.017p Mjc=.3174 Vjc=.75
++ Fc=.5 Cje=4.973p Mje=.4146 Vje=.75 Tr=4.673n Tf=821.7p Itf=.35 Vtf=4 Xtf=7 Rb=10)
+
+* 1N914 / 1N4148 (LTspice standard.dio)
+.model 1N914 D(Is=2.52n Rs=.568 N=1.752 Cjo=4p M=.4 Tt=20n)
+
+* ---------------------------------------------------------------------------
+* Q1 input booster: in -> C1 -> R1 -> base; shunt feedback R3||C2; out = collector
+.subckt BMP_Q1 in c vcc
+C1  in  n1  100n
+R1  n1  b   39k
+R2  b   0   100k
+R3  c   b   470k
+C2  c   b   470p
+R5  vcc c   12k
+R4  e   0   390
+Q1  c   b   e 2N5088
+.ends
+
+* Sustain pot (100k log) after Q1: in -> C3 -> pot -> R7 1k -> gnd; out = wiper
+* (R7 placement to ground is a reading of the GGG BOM; it only sets the minimum)
+.subckt BMP_SUSTAIN in w params: frac=0.5
+C3  in  top 100n
+Rt  top w   {max(100k*(1-frac),1)}
+Rb  w   bot {max(100k*frac,1)}
+R7  bot 0   1k
+.ends
+
+* Clipping stage (Q2/Q3): in -> C -> 10k -> base; feedback 470k || 470p ||
+* (47n + anti-parallel 1N914 pair); out = collector
+.subckt BMP_CLIP in c vcc
+Cin in  n1  100n
+Rs  n1  b   10k
+Rb  b   0   100k
+Rf  c   b   470k
+Cf  c   b   470p
+Cd  c   d   47n
+D1  d   b   1N914
+D2  b   d   1N914
+Rc  vcc c   12k
+Re  e   0   390
+Q   c   b   e 2N5088
+.ends
+
+* Passive tone stack: in -> R_LP -> lp (C_LP to gnd); in -> C_HP -> hp (R_HP to gnd)
+* pot between lp and hp, out = wiper; tone=0 -> wiper at lp (bass)
+.subckt BMP_TONE in w params: tone=0.5 rlp=11.5k clp=10n chp=3.9n rhp=22k
+Rlp in  lp  {rlp}
+Clp lp  0   {clp}
+Chp in  hp  {chp}
+Rhp hp  0   {rhp}
+Ra  lp  w   {max(100k*tone,1)}
+Rb  w   hp  {max(100k*(1-tone),1)}
+.ends
+
+* Q4 recovery stage: in -> C12 -> base; R22 feedback; out = collector
+.subckt BMP_Q4 in c vcc
+C12 in  b   100n
+R21 b   0   100k
+R22 c   b   470k
+R24 vcc c   10k
+R23 e   0   2k
+Q4  c   b   e 2N5088
+.ends

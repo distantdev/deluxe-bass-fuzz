@@ -1,0 +1,17 @@
+* AC tone_t0.50
+.include "D:/HobbyCode/bass-fuzz-deluxe/tests/ReferenceData/spice/bmp_parts.lib"
+Vcc vcc 0 DC 9
+Vin in 0 DC 0 AC 1
+Xt in out BMP_TONE tone=0.5
+
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=8
+ac dec 50 20 20000
+let mag_db = db(v(out))
+let phase_deg = cph(v(out)) * 180 / pi
+wrdata D:/HobbyCode/bass-fuzz-deluxe/tests/ReferenceData/spice/ac_tone_t0.50.csv mag_db phase_deg
+quit
+.endc
+.end

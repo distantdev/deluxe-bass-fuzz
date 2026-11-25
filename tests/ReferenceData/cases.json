@@ -1,0 +1,31 @@
+{
+  "sampleRate": 192000,
+  "tranSeconds": 0.2,
+  "analysisSeconds": 0.1,
+  "acPointsPerDecade": 50,
+  "acStartHz": 20,
+  "acStopHz": 20000,
+  "toneDefault": 0.5,
+  "ac": [
+    { "name": "tone_t0.00", "block": "tone", "tone": 0.0 },
+    { "name": "tone_t0.25", "block": "tone", "tone": 0.25 },
+    { "name": "tone_t0.50", "block": "tone", "tone": 0.5 },
+    { "name": "tone_t0.75", "block": "tone", "tone": 0.75 },
+    { "name": "tone_t1.00", "block": "tone", "tone": 1.0 },
+    { "name": "input_s0.25", "block": "input", "sustain": 0.25 },
+    { "name": "input_s0.50", "block": "input", "sustain": 0.5 },
+    { "name": "input_s1.00", "block": "input", "sustain": 1.0 },
+    { "name": "clip_ac", "block": "clip" },
+    { "name": "output_ac", "block": "output" },
+    { "name": "output_tone_t0.00", "block": "toneout", "tone": 0.0 },
+    { "name": "output_tone_t0.50", "block": "toneout", "tone": 0.5 },
+    { "name": "output_tone_t1.00", "block": "toneout", "tone": 1.0 },
+    { "name": "core_s0.25", "block": "core", "sustain": 0.25 },
+    { "name": "core_s0.50", "block": "core", "sustain": 0.5 },
+    { "name": "core_s1.00", "block": "core", "sustain": 1.0 }
+  ],
+  "tran": [
+    { "block": "clip", "freqs": [100, 1000], "amps": [0.01, 0.05, 0.2] },
+    { "block": "core", "sustains": [0.25, 0.5, 1.0], "freqs": [100, 1000], "amps": [0.05, 0.2, 1.0] }
+  ]
+}
